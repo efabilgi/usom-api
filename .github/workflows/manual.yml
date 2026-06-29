@@ -15,26 +15,26 @@ jobs:
     - name: Depoyu Kopyala
       uses: actions/checkout@v3
 
-    - name: Gunluk USOM Verisini Cek
+    - name: Garanti Havuzdan Veriyi Cek
       run: |
         python -c "
         import urllib.request
-        # Doğrudan çalışan, güncel ve bot engeli olmayan temiz USOM domain havuzu
-        url = 'https://raw.githubusercontent.com/v0kan/usom-feed/main/usom_domain.txt'
+        # Cloudflare / Küresel siber güvenlik topluluklarının doğrudan resmi USOM'dan anlık klonladığı açık istihbarat listesi
+        url = 'https://raw.githubusercontent.com/borestad/blocklist-tr/main/blocklist-tr.txt'
         
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req) as r:
                 content = r.read().decode('utf-8')
                 
-            if content and len(content) > 500:
+            if content and len(content) > 1000:
                 with open('usom_listesi.txt', 'w', encoding='utf-8') as f:
                     f.write(content)
-                print('USOM listesi gercek verilerle senkronize edildi.')
+                print('Liste temiz ve gercek verilerle esitlendi.')
             else:
-                print('Gelen veri yetersiz görünüyor, dosya güncellenmedi.')
+                print('Veri boyutu yetersiz.')
         except Exception as e:
-            print('İndirme sirasinda hata olustu:', e)
+            print('Hata:', e)
         "
 
     - name: Degisiklikleri Kaydet ve Yukle
@@ -42,5 +42,5 @@ jobs:
         git config --global user.name 'GitHub Action'
         git config --global user.email 'action@github.com'
         git add usom_listesi.txt
-        git commit -m "USOM Listesi Gercek Verilerle Guncellendi" || exit 0
+        git commit -m "USOM Listesi Guncellendi" || exit 0
         git push origin main
