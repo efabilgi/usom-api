@@ -2,8 +2,11 @@ name: USOM Guncelleme
 
 on:
   schedule:
-    - cron: '0 2 * * *' 
-  workflow_dispatch: 
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write # Token'a yazma iznini buradan da kesin olarak dikte ediyoruz
 
 jobs:
   build:
@@ -18,12 +21,12 @@ jobs:
         python-version: '3.x'
 
     - name: Scripti Calistir
-      run: python usomapi.py  
+      run: python usomapi.py
 
     - name: Degisiklikleri Kaydet ve Yukle
       run: |
         git config --global user.name 'GitHub Action'
         git config --global user.email 'action@github.com'
-        git add .
+        git add usom_listesi.txt
         git commit -m "USOM Listesi Güncellendi" || exit 0
-        git push
+        git push origin main
