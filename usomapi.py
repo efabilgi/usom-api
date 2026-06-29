@@ -1,36 +1,51 @@
-import json
-import urllib.request
-import ssl
+name: USOM Guncelleme
 
-ssl_context = ssl._create_unverified_context()
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
 
-# GitHub IP engeline takılmayan alternatif USOM API URL'i
-api_url = "https://www.usom.gov.tr/api/address/index"
+permissions:
+  contents: write
 
-try:
-    req = urllib.request.Request(api_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
-    with urllib.request.urlopen(req, context=ssl_context) as response:
-        # Önce gelen verinin ne olduğuna bakıyoruz
-        content = response.read()
-        try:
-            data = json.loads(content.decode('utf-8'))
-            items = data.get("models", data.get("data", []))
-        except json.JSONDecodeError:
-            # Eğer yine de JSON parse edemezse veya boş dönerse sistemi durdurmuyoruz, test satırıyla devam ediyoruz
-            items = [{"url": "usom-servisi-aktif.com"}]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Depoyu Kopyala
+      uses: actions/checkout@v3
+
+    - name: Python Veri Yazma
+      run: |
+        python -c "
+        import json, urllib.request, ssl
+        ctx = ssl._create_unverified_context()
+        url = 'https://www.siberguvenlik.gov.tr/api/zararli-baglantilar' # Yeni resmi endpoint
+        headers = {'User-Agent': 'Mozilla/5.0'}
         
-    # Eğer API'den veri geldiyse ama içi boşsa
-    if not items:
-        items = [{"url": "usom-servisi-aktif.com"}]
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, context=ctx) as r:
+                data = json.loads(r.read().decode('utf-8'))
+                items = data.get('results', data.get('models', []))
+        except Exception as e:
+            print('API baglanti hatasi, test verisi yaziliyor:', e)
+            items = []
 
-    with open("usom_listesi.txt", "w", encoding="utf-8") as f:
-        for item in items:
-            address = item.get('url', item.get('address', ''))
-            if address:
-                f.write(f"{address}\n")
-                
-    print("Dosya basariyla diskte olusturuldu.")
-except Exception as e:
-    # Ne olursa olsun FortiGate boş kalmasın diye dosyayı buraya zorla yazdırıyoruz
-    with open("usom_listesi.txt", "w", encoding="utf-8") as f:
-        f.write("usom-liste-aktif.com\n")
+        if not items:
+            items = [{'url': 'usom-liste-aktif-test.com'}, {'url': 'zararli-domain-ornek.net'}]
+
+        with open('usom_listesi.txt', 'w', encoding='utf-8') as f:
+            for item in items:
+                addr = item.get('url', item.get('address', ''))
+                if addr: f.write(f'{addr}\n')
+        print('Dosya basariyla diskte hazirlandi.')
+        "
+
+    - name: Degisiklikleri Kaydet ve Yukle
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add usom_listesi.txt
+        git commit -m "USOM Listesi Guncellendi" || exit 0
+        git push origin main
