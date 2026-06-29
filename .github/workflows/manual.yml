@@ -1,0 +1,29 @@
+name: USOM Guncelleme
+
+on:
+  schedule:
+    - cron: '0 2 * * *' 
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Depoyu Kopyala
+      uses: actions/checkout@v3
+
+    - name: Python Kur
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Scripti Calistir
+      run: python usomapi.py  
+
+    - name: Degisiklikleri Kaydet ve Yukle
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add .
+        git commit -m "USOM Listesi Güncellendi" || exit 0
+        git push
