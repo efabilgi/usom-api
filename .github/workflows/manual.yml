@@ -21,7 +21,7 @@ jobs:
         import json, urllib.request, ssl
         ctx = ssl._create_unverified_context()
         # GitHub engeline takılmayan alternatif resmi USOM veri havuzu adresi
-        url = 'https://www.usom.gov.tr/api/address/index?per-page=1000'
+        url = 'https://siberguvenlik.gov.tr/zararli-baglantilar'
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'application/json'
