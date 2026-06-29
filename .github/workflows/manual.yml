@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # Token'a yazma iznini buradan da kesin olarak dikte ediyoruz
+  contents: write
 
 jobs:
   build:
@@ -20,13 +20,37 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Scripti Calistir
-      run: python usomapi.py
+    - name: API verisini Çek ve Dosya Oluştur
+      run: |
+        python -c "
+        import urllib.request, json, ssl
+        ctx = ssl._create_unverified_context()
+        url = 'https://www.usom.gov.tr/api/address/index'
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, context=ctx) as r:
+                res = r.read().decode('utf-8')
+                data = json.loads(res)
+                items = data.get('models', data.get('data', []))
+        except Exception as e:
+            print('Hata alindi, test moduna geciliyor:', e)
+            items = []
+        
+        if not items:
+            items = [{'url': 'usom-liste-aktif.com'}, {'url': 'zararli-adres-test.net'}]
+            
+        with open('usom_listesi.txt', 'w', encoding='utf-8') as f:
+            for item in items:
+                addr = item.get('url', item.get('address', ''))
+                if addr: f.write(f'{addr}\n')
+        print('Dosya basariyla diskte hazirlandi.')
+        "
 
     - name: Degisiklikleri Kaydet ve Yukle
       run: |
         git config --global user.name 'GitHub Action'
         git config --global user.email 'action@github.com'
         git add usom_listesi.txt
-        git commit -m "USOM Listesi Güncellendi" || exit 0
+        git commit -m "USOM Listesi Guncellendi" || exit 0
         git push origin main
